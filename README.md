@@ -1,3 +1,29 @@
+++ filename: /Users/oran/Documents/לימודים אונו/שנה ב/סימסטר ב/פרויקט מסכם/FocusFlow/README.md
+# FocusFlow — Frontend
+
+This repository contains the FocusFlow React frontend scaffold (Vite + React Router).
+
+Quick commands
+
+```bash
+# install deps
+npm install
+
+# dev server (http://localhost:5177/)
+npm run dev
+
+# build for production
+npm run build
+
+# preview production build locally
+npm run preview
+```
+
+Repo: https://github.com/oranhen/focusflow-app
+
+Notes
+- Design system variables are defined in `src/styles/globals.css`.
+- Shared components live in `src/components` and pages in `src/pages`.
 # FocusFlow — Frontend (Vite + React)
 
 This repository contains a Vite + React frontend scaffold for the FocusFlow final project assignment.
