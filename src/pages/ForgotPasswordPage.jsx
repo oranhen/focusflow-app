@@ -26,39 +26,40 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="container">
-      <div className="card" style={{ maxWidth: 420, margin: '0 auto' }}>
-        <h2>Reset password</h2>
-        <p style={{ color: 'var(--muted)' }}>Enter your email to receive reset instructions.</p>
+      <div className="card" style={{ maxWidth: 420, margin: '40px auto 0' }}>
+        <h2 style={{ marginTop: 0 }}>Reset your password</h2>
+        <p style={{ color: 'var(--muted)', marginTop: 0 }}>
+          Enter your email and we'll send a link to set a new password.
+        </p>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            required
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)' }}
-          />
+        <form className="form-grid" onSubmit={handleSubmit}>
+          <div className="form-row">
+            <label htmlFor="fp-email">Email</label>
+            <input
+              id="fp-email"
+              className="form-input"
+              required
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-          {error && (
-            <div style={{ color: '#b91c1c', marginTop: 10, fontSize: 14 }} role="alert">
-              {error}
-            </div>
-          )}
+          {error && <div className="form-error" role="alert">{error}</div>}
           {sent && (
-            <div style={{ color: '#065f46', marginTop: 10, fontSize: 14 }} role="status">
+            <div className="form-success" role="status">
               If an account exists for {email}, a reset link has been sent.
             </div>
           )}
 
-          <div style={{ marginTop: 12 }}>
-            <button className="nav-cta" type="submit" disabled={sending}>
-              {sending ? 'Sending…' : 'Send reset link'}
-            </button>
-          </div>
+          <button className="btn primary" type="submit" disabled={sending}>
+            {sending ? 'Sending…' : 'Send reset link'}
+          </button>
 
-          <div style={{ marginTop: 12, fontSize: 14, color: 'var(--muted)' }}>
-            <Link to="/login">Back to sign in</Link>
+          <div style={{ fontSize: 14, color: 'var(--muted)', textAlign: 'center' }}>
+            <Link to="/login">← Back to sign in</Link>
           </div>
         </form>
       </div>

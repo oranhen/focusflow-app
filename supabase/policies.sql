@@ -120,15 +120,21 @@ create policy "progress_entries: delete own or admin"
   using (user_id = auth.uid() or public.is_admin());
 
 -- =============================================================================
--- ai_insights  (read + mark-as-read; INSERT only from server)
+-- ai_insights  (read + insert-own + mark-as-read)
+-- INSERTs are made by Edge Functions running under the caller's JWT.
 -- =============================================================================
 drop policy if exists "ai_insights: read own or admin"   on public.ai_insights;
+drop policy if exists "ai_insights: insert own"          on public.ai_insights;
 drop policy if exists "ai_insights: update own or admin" on public.ai_insights;
 drop policy if exists "ai_insights: delete own or admin" on public.ai_insights;
 
 create policy "ai_insights: read own or admin"
   on public.ai_insights for select
   using (user_id = auth.uid() or public.is_admin());
+
+create policy "ai_insights: insert own"
+  on public.ai_insights for insert
+  with check (user_id = auth.uid());
 
 create policy "ai_insights: update own or admin"
   on public.ai_insights for update
@@ -143,12 +149,17 @@ create policy "ai_insights: delete own or admin"
 -- recommendations  (same pattern as ai_insights)
 -- =============================================================================
 drop policy if exists "recommendations: read own or admin"   on public.recommendations;
+drop policy if exists "recommendations: insert own"          on public.recommendations;
 drop policy if exists "recommendations: update own or admin" on public.recommendations;
 drop policy if exists "recommendations: delete own or admin" on public.recommendations;
 
 create policy "recommendations: read own or admin"
   on public.recommendations for select
   using (user_id = auth.uid() or public.is_admin());
+
+create policy "recommendations: insert own"
+  on public.recommendations for insert
+  with check (user_id = auth.uid());
 
 create policy "recommendations: update own or admin"
   on public.recommendations for update

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import Spinner from './Spinner'
 
 export default function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, profile, loading, isAdmin } = useAuth()
@@ -8,8 +9,8 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
 
   if (loading) {
     return (
-      <div className="container" style={{ padding: 32, color: 'var(--muted)' }}>
-        Loading…
+      <div className="container" style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
+        <Spinner />
       </div>
     )
   }

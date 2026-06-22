@@ -8,6 +8,7 @@ import GoalsPage from './pages/GoalsPage'
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import OnboardingPage from './pages/OnboardingPage'
 import ProfilePage from './pages/ProfilePage'
 import SettingsPage from './pages/SettingsPage'
@@ -15,6 +16,7 @@ import ChatbotPage from './pages/ChatbotPage'
 import ForumPage from './pages/ForumPage'
 import AdminUsersPage from './pages/AdminUsersPage'
 import AdminStatisticsPage from './pages/AdminStatisticsPage'
+import NotFoundPage from './pages/NotFoundPage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -31,6 +33,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/forum" element={<ForumPage />} />
 
           {/* Authenticated */}
@@ -46,7 +49,7 @@ export default function App() {
           <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
           <Route path="/admin/statistics" element={<ProtectedRoute requireAdmin><AdminStatisticsPage /></ProtectedRoute>} />
 
-          <Route path="*" element={<LandingPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <Footer />

@@ -74,7 +74,7 @@ export function AuthProvider({ children }) {
 
   const resetPassword = async (email) => {
     return supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login`,
+      redirectTo: `${window.location.origin}/reset-password`,
     })
   }
 

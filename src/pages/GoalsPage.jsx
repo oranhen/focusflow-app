@@ -4,6 +4,10 @@ import { listGoals, createGoal, updateGoal, deleteGoal, generateTasksForGoal } f
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import Spinner from '../components/Spinner'
+import Sidebar from '../components/Sidebar'
+import { useToast } from '../components/ToastProvider'
+import { useConfirm } from '../components/ConfirmProvider'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const CATEGORIES = ['career', 'study', 'health', 'personal', 'other']
 const STATUSES = ['active', 'completed', 'paused']
@@ -12,13 +16,15 @@ const EMPTY_GOAL = { title: '', description: '', category: 'career', target_date
 
 export default function GoalsPage() {
   const { user } = useAuth()
+  const toast = useToast()
+  const confirm = useConfirm()
+  useDocumentTitle('Goals')
   const [goals, setGoals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editing, setEditing] = useState(null) // null | { ...goal } (id present = edit)
   const [saving, setSaving] = useState(false)
   const [generatingFor, setGeneratingFor] = useState(null)
-  const [genSuccess, setGenSuccess] = useState(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -67,24 +73,30 @@ export default function GoalsPage() {
   async function handleGenerate(goal) {
     setGeneratingFor(goal.id)
     setError(null)
-    setGenSuccess(null)
     const { data, error } = await generateTasksForGoal(goal.id)
     setGeneratingFor(null)
     if (error) {
-      setError(`AI task generation failed: ${error.message}`)
+      toast.error(`AI task generation failed: ${error.message}`)
       return
     }
     const count = data?.tasks?.length || 0
-    setGenSuccess(`Generated ${count} task${count === 1 ? '' : 's'} for today — check the Dashboard.`)
+    toast.success(`Generated ${count} AI task${count === 1 ? '' : 's'} for today — see them on the Dashboard.`)
   }
 
   async function handleDelete(goal) {
-    if (!confirm(`Delete goal "${goal.title}"? This will also delete all its daily tasks and progress entries.`)) return
+    const ok = await confirm({
+      title: 'Delete goal?',
+      message: `"${goal.title}" will be removed along with all its daily tasks and progress entries. This cannot be undone.`,
+      confirmLabel: 'Delete goal',
+      danger: true,
+    })
+    if (!ok) return
     const { error } = await deleteGoal(goal.id)
     if (error) {
-      setError(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Goal deleted.')
     await load()
   }
 
@@ -99,8 +111,9 @@ export default function GoalsPage() {
       </div>
 
       {error && <div className="form-error" role="alert" style={{ marginBottom: 12 }}>{error}</div>}
-      {genSuccess && <div className="form-success" role="status" style={{ marginBottom: 12 }}>{genSuccess}</div>}
 
+      <div className="dashboard-grid">
+        <main>
       {loading ? (
         <Spinner />
       ) : goals.length === 0 ? (
@@ -162,6 +175,10 @@ export default function GoalsPage() {
           ))}
         </div>
       )}
+
+        </main>
+        <Sidebar />
+      </div>
 
       <Modal
         open={!!editing}

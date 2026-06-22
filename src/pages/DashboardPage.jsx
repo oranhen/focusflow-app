@@ -9,12 +9,18 @@ import {
   setTaskCompleted,
   deleteTask,
   generateTasksForGoal,
+  listInsights,
+  markInsightRead,
+  generateInsight,
   todayISO,
 } from '../lib/api'
 import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import Spinner from '../components/Spinner'
+import { useToast } from '../components/ToastProvider'
+import { useConfirm } from '../components/ConfirmProvider'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const DAILY_TIPS = [
   'Break big goals into 15-minute focused blocks.',
@@ -22,17 +28,37 @@ const DAILY_TIPS = [
   'Consistency beats intensity — show up every day, even briefly.',
   'When you feel stuck, lower the bar: just open the file, write one sentence.',
   'Tomorrow you starts with what you finished today.',
+  'A small step forward beats a perfect plan that never starts.',
+  'Energy follows action, not the other way around.',
+  'If a task feels heavy, it\'s probably too big — cut it in half.',
+  'Protect your peak energy time. Use it for the work that matters most.',
+  'Done is better than perfect — the next iteration is the polish step.',
+  'When you finish today\'s tasks, stop. Rest is part of the work.',
+  'Track what you do, not just what you plan. Receipts beat intentions.',
+  'The first 5 minutes are the hardest. Just start the timer.',
+  'Your future self will thank you for one honest hour, not three distracted ones.',
+  'Reduce the steps between you and the work — open the file, leave the tab open.',
+  'Two days off in a row is a pattern. Don\'t miss twice.',
+  'A goal without a daily action is a wish.',
+  'Reviewing what worked yesterday is faster than planning what to do tomorrow.',
+  'Boredom is a signal — the work is too easy, or the goal too vague.',
+  'You\'re not behind. You\'re exactly where the last tick mark left you.',
 ]
 
 export default function DashboardPage() {
   const { user, profile } = useAuth()
+  const toast = useToast()
+  const confirm = useConfirm()
+  useDocumentTitle('Dashboard')
   const today = useMemo(() => todayISO(), [])
 
   const [goals, setGoals] = useState([])
   const [todayTasks, setTodayTasks] = useState([])
   const [recent, setRecent] = useState([])
+  const [insights, setInsights] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [generatingInsight, setGeneratingInsight] = useState(false)
 
   const [adding, setAdding] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -43,17 +69,38 @@ export default function DashboardPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const [{ data: g, error: gErr }, { data: t, error: tErr }, { data: r }] = await Promise.all([
+    const [{ data: g, error: gErr }, { data: t, error: tErr }, { data: r }, { data: ins }] = await Promise.all([
       listGoals(user.id),
       listTasksForDate(user.id, today),
       listRecentTasks(user.id, 60),
+      listInsights(user.id, { limit: 3 }),
     ])
     if (gErr || tErr) setError((gErr || tErr).message)
     setGoals(g || [])
     setTodayTasks(t || [])
     setRecent(r || [])
+    setInsights(ins || [])
     setLoading(false)
   }, [user, today])
+
+  async function handleGenerateInsight() {
+    setGeneratingInsight(true)
+    const { data, error } = await generateInsight()
+    setGeneratingInsight(false)
+    if (error) {
+      toast.error(`Insight generation failed: ${error.message}`)
+      return
+    }
+    if (data?.insight) {
+      setInsights((prev) => [data.insight, ...prev].slice(0, 3))
+      toast.success('Fresh insight ready.')
+    }
+  }
+
+  async function handleMarkInsightRead(insightId) {
+    setInsights((prev) => prev.map((i) => (i.id === insightId ? { ...i, is_read: true } : i)))
+    await markInsightRead(insightId)
+  }
 
   useEffect(() => { load() }, [load])
 
@@ -107,10 +154,16 @@ export default function DashboardPage() {
   }
 
   async function removeTask(task) {
-    if (!confirm(`Delete task "${task.title}"?`)) return
+    const ok = await confirm({
+      title: 'Delete task?',
+      message: `"${task.title}" will be removed from today.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
     const { error } = await deleteTask(task.id)
     if (error) {
-      setError(error.message)
+      toast.error(error.message)
       return
     }
     setTodayTasks((prev) => prev.filter((t) => t.id !== task.id))
@@ -125,20 +178,20 @@ export default function DashboardPage() {
 
   async function handleGenerate(goalId) {
     setGeneratingFor(goalId)
-    setError(null)
     const { data, error } = await generateTasksForGoal(goalId)
     setGeneratingFor(null)
     if (error) {
-      setError(`AI task generation failed: ${error.message}`)
+      toast.error(`AI task generation failed: ${error.message}`)
       return
     }
     const newTasks = data?.tasks || []
     if (newTasks.length === 0) {
-      setError('AI returned no tasks. Try again or refine the goal description.')
+      toast.error('AI returned no tasks. Try again or refine the goal description.')
       return
     }
     setTodayTasks((prev) => [...prev, ...newTasks])
     setRecent((prev) => [...newTasks, ...prev])
+    toast.success(`Added ${newTasks.length} AI-generated task${newTasks.length === 1 ? '' : 's'} to today.`)
   }
 
   async function handleAdd(e) {
@@ -162,12 +215,15 @@ export default function DashboardPage() {
   }
 
   const firstName = (profile?.full_name || '').split(' ')[0]
+  const hour = new Date().getHours()
+  const greeting =
+    hour < 5 ? 'Up late' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="container">
       <div className="page-header">
         <div>
-          <h1>{firstName ? `Welcome back, ${firstName}` : 'Welcome back'} 👋</h1>
+          <h1>{firstName ? `${greeting}, ${firstName}` : greeting} 👋</h1>
           <div className="subtitle">
             {today} · {stats.completedToday}/{stats.totalToday || 0} tasks done today
           </div>
@@ -244,6 +300,48 @@ export default function DashboardPage() {
                     <div className="task-actions">
                       <button className="btn-icon" title="Delete" onClick={() => removeTask(t)}>🗑</button>
                     </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="card rounded-xl" style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0 }}>✨ AI insights</h3>
+              <button
+                className="btn small ghost"
+                onClick={handleGenerateInsight}
+                disabled={generatingInsight}
+              >
+                {generatingInsight ? 'Thinking…' : 'Get a fresh insight'}
+              </button>
+            </div>
+            {insights.length === 0 ? (
+              <p style={{ color: 'var(--muted)', margin: 0, fontSize: 14 }}>
+                Once you complete a few tasks, ask for an insight to see patterns in how you actually work.
+              </p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 8 }}>
+                {insights.map((ins) => (
+                  <li
+                    key={ins.id}
+                    className="card"
+                    style={{
+                      padding: 12,
+                      borderColor: ins.is_read ? 'var(--border)' : 'rgba(107,70,193,0.35)',
+                      background: ins.is_read ? 'var(--card-bg)' : 'rgba(107,70,193,0.04)',
+                      cursor: ins.is_read ? 'default' : 'pointer',
+                    }}
+                    onClick={() => !ins.is_read && handleMarkInsightRead(ins.id)}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <strong style={{ fontSize: 14 }}>{ins.title}</strong>
+                      <span className={`badge ${ins.insight_type === 'success' ? 'mint' : ins.insight_type === 'warning' ? 'red' : ins.insight_type === 'habit' ? 'sun' : ''}`}>
+                        {ins.insight_type}
+                      </span>
+                    </div>
+                    <p style={{ margin: '6px 0 0', color: 'var(--muted)', fontSize: 13 }}>{ins.content}</p>
                   </li>
                 ))}
               </ul>

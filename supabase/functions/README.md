@@ -8,7 +8,9 @@ secrets to the browser.
 
 | Name | What it does |
 |---|---|
-| `generate-daily-tasks` | Given a goal, calls Gemini and inserts 3 small, actionable tasks for today into `daily_tasks`. |
+| `generate-daily-tasks` | Given a goal, calls Gemini and inserts 3 small actionable tasks for today into `daily_tasks`. Also writes a single matching row into `recommendations`. |
+| `chat` | Receives a chat message, calls Gemini with the user's profile + active goals + recent chat history as context, persists both turns to `chat_messages`. Powers the Chatbot page. |
+| `generate-insight` | Reads the user's last 14 days of task data + goals, asks Gemini to surface ONE specific insight, persists into `ai_insights`. Triggered by the "Get a fresh insight" button on the Dashboard. |
 
 ## One-time setup (~15 minutes)
 
@@ -52,13 +54,15 @@ Open the Supabase Dashboard → SQL Editor → paste the contents of
 [`../migrations/0002_ai_generated.sql`](../migrations/0002_ai_generated.sql)
 and run.
 
-### 6. Deploy the function
+### 6. Deploy the functions
 
 ```bash
 supabase functions deploy generate-daily-tasks
+supabase functions deploy chat
+supabase functions deploy generate-insight
 ```
 
-That's it. The "✨ Generate today's tasks" button in the app will now work.
+That's it. The "✨ Generate today's tasks" button, the Chatbot, and the "Get a fresh insight" card on the Dashboard will all work.
 
 ## Day-to-day
 

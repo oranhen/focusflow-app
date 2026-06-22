@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { listActivePlans, fetchCurrentSubscription, chooseSubscriptionPlan } from '../lib/api'
 import Spinner from '../components/Spinner'
+import { useToast } from '../components/ToastProvider'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function PricingPage() {
+  useDocumentTitle('Pricing')
   const nav = useNavigate()
   const { user } = useAuth()
+  const toast = useToast()
 
   const [plans, setPlans] = useState([])
   const [current, setCurrent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [switchingTo, setSwitchingTo] = useState(null)
-  const [info, setInfo] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -36,15 +39,13 @@ export default function PricingPage() {
       return
     }
     setSwitchingTo(plan.id)
-    setError(null)
-    setInfo(null)
     const { error } = await chooseSubscriptionPlan(user.id, plan.id)
     setSwitchingTo(null)
     if (error) {
-      setError(error.message)
+      toast.error(error.message)
       return
     }
-    setInfo(`You're now on the ${plan.name} plan.`)
+    toast.success(`You're now on the ${plan.name} plan.`)
     await load()
   }
 
@@ -60,7 +61,6 @@ export default function PricingPage() {
       </div>
 
       {error && <div className="form-error" role="alert" style={{ marginBottom: 12 }}>{error}</div>}
-      {info && <div className="form-success" role="status" style={{ marginBottom: 12 }}>{info}</div>}
 
       {loading ? (
         <Spinner />
