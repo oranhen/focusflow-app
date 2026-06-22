@@ -4,9 +4,12 @@ import { NavLink } from 'react-router-dom'
 export default function Sidebar(){
   const items = [
     {to:'/dashboard',label:'Dashboard',icon:'🏠'},
+    {to:'/goals',label:'Goals',icon:'🎯'},
     {to:'/progress',label:'Progress',icon:'📈'},
     {to:'/chatbot',label:'Chatbot',icon:'💬'},
-    {to:'/forum',label:'Forum',icon:'💬'},
+    {to:'/forum',label:'Forum',icon:'🗣'},
+    {to:'/profile',label:'Profile',icon:'👤'},
+    {to:'/settings',label:'Settings',icon:'⚙'},
   ]
 
   return (
