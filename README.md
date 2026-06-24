@@ -3,14 +3,10 @@
 > **FocusFlow turns your big goal into today's three actions — powered by AI.**
 
 **Live demo:** https://focusflow-app-zeta.vercel.app/
+
 **Repository:** https://github.com/oranhen/focusflow-app
+
 **Author:** Oran Chen
-
----
-
-## Screenshots
-
-_Will be added after the live deployment. Placeholder location: [`docs/screenshots/`](docs/screenshots/)._
 
 ---
 
